@@ -5,41 +5,56 @@ if( isset( $_GET[ 'Login' ] ) ) {
 	$user = ((isset($GLOBALS["___mysqli_ston"]) && is_object($GLOBALS["___mysqli_ston"])) ? mysqli_real_escape_string($GLOBALS["___mysqli_ston"], $user) : "");
 
 	$pass = $_GET[ 'password' ];
+	$pass = ((isset($GLOBALS["___mysqli_ston"]) && is_object($GLOBALS["___mysqli_ston"])) ? mysqli_real_escape_string($GLOBALS["___mysqli_ston"], $pass) : "");
 	$pass = md5( $pass );
 
-	// Check failed login count in session for rate limiting
-	if( !isset( $_SESSION['login_attempts'] ) ) {
-		$_SESSION['login_attempts'] = 0;
-		$_SESSION['login_lockout'] = 0;
+	$total_failed_login = 3;
+	$lockout_time       = 15;
+	$account_locked     = false;
+
+	// Check failed login count from database
+	$stmt = mysqli_prepare($GLOBALS["___mysqli_ston"], 'SELECT failed_login, last_login FROM users WHERE user = ? LIMIT 1;');
+	mysqli_stmt_bind_param($stmt, 's', $user);
+	mysqli_stmt_execute($stmt);
+	$result = mysqli_stmt_get_result($stmt);
+	$row = mysqli_fetch_assoc($result);
+	mysqli_stmt_close($stmt);
+
+	if( $row && ( $row['failed_login'] >= $total_failed_login ) ) {
+		$last_login = strtotime( $row['last_login'] );
+		$timeout    = $last_login + ($lockout_time * 60);
+		$timenow    = time();
+		if( $timenow < $timeout ) {
+			$account_locked = true;
+		}
 	}
 
-	if( $_SESSION['login_lockout'] > time() ) {
-		$html .= "<pre><br />Too many failed attempts. Please try again later.</pre>";
-		((is_null($___mysqli_res = mysqli_close($GLOBALS["___mysqli_ston"]))) ? false : $___mysqli_res);
-		return;
-	}
-
+	// Check the database
 	$query  = "SELECT * FROM `users` WHERE user = '$user' AND password = '$pass';";
 	$result = mysqli_query($GLOBALS["___mysqli_ston"],  $query ) or die( '<pre>' . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . '</pre>' );
 
-	if( $result && mysqli_num_rows( $result ) == 1 ) {
+	if( $result && mysqli_num_rows( $result ) == 1 && !$account_locked ) {
 		$row    = mysqli_fetch_assoc( $result );
 		$avatar = $row["avatar"];
 
-		$_SESSION['login_attempts'] = 0;
-		$_SESSION['login_lockout'] = 0;
-
 		$html .= "<p>Welcome to the password protected area {$user}</p>";
 		$html .= "<img src=\"{$avatar}\" />";
+
+		// Reset failed login count
+		$stmt = mysqli_prepare($GLOBALS["___mysqli_ston"], 'UPDATE users SET failed_login = 0 WHERE user = ? LIMIT 1;');
+		mysqli_stmt_bind_param($stmt, 's', $user);
+		mysqli_stmt_execute($stmt);
+		mysqli_stmt_close($stmt);
 	}
 	else {
-		$_SESSION['login_attempts']++;
-		if( $_SESSION['login_attempts'] >= 3 ) {
-			$_SESSION['login_lockout'] = time() + 900;
-			$_SESSION['login_attempts'] = 0;
-		}
 		sleep( 2 );
 		$html .= "<pre><br />Username and/or password incorrect.</pre>";
+
+		// Increment failed login count
+		$stmt = mysqli_prepare($GLOBALS["___mysqli_ston"], 'UPDATE users SET failed_login = (failed_login + 1), last_login = now() WHERE user = ? LIMIT 1;');
+		mysqli_stmt_bind_param($stmt, 's', $user);
+		mysqli_stmt_execute($stmt);
+		mysqli_stmt_close($stmt);
 	}
 
 	((is_null($___mysqli_res = mysqli_close($GLOBALS["___mysqli_ston"]))) ? false : $___mysqli_res);
