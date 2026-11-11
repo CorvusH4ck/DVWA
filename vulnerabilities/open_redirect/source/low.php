@@ -1,14 +1,9 @@
 <?php
 
-$allowed_targets = array(
-	"info.php?id=1",
-	"info.php?id=2",
-	"https://digi.ninja",
-);
-
 if (array_key_exists ("redirect", $_GET) && $_GET['redirect'] != "") {
 	$target = $_GET['redirect'];
-	if( in_array( $target, $allowed_targets ) ) {
+	// Only allow relative redirects to the info page (no external URLs)
+	if (preg_match( '/^info\.php\?id=\d+$/', $target )) {
 		header ("location: " . $target);
 		exit;
 	}

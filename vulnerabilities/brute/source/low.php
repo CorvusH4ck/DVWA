@@ -16,8 +16,10 @@ if( isset( $_GET[ 'Login' ] ) ) {
 	$stmt = mysqli_prepare($GLOBALS["___mysqli_ston"], 'SELECT failed_login, last_login FROM users WHERE user = ? LIMIT 1;');
 	mysqli_stmt_bind_param($stmt, 's', $user);
 	mysqli_stmt_execute($stmt);
-	$result = mysqli_stmt_get_result($stmt);
-	$row = mysqli_fetch_assoc($result);
+	$failed_login_count = null;
+	$last_login_time    = null;
+	mysqli_stmt_bind_result($stmt, $failed_login_count, $last_login_time);
+	$row = mysqli_stmt_fetch($stmt) ? array( 'failed_login' => $failed_login_count, 'last_login' => $last_login_time ) : false;
 	mysqli_stmt_close($stmt);
 
 	if( $row && ( $row['failed_login'] >= $total_failed_login ) ) {

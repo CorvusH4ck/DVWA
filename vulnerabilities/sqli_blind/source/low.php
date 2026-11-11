@@ -5,7 +5,11 @@ if( isset( $_GET[ 'Submit' ] ) ) {
 	$id = $_GET[ 'id' ];
 	$exists = false;
 
-	// Cast to int — prevents any SQL injection for a numeric ID field
+	// Reject non-numeric input, then cast to int
+	if( !is_numeric( $id ) ) {
+		header( $_SERVER[ 'SERVER_PROTOCOL' ] . ' 404 Not Found' );
+		$html .= '<pre>User ID is MISSING from the database.</pre>';
+	} else {
 	$id = intval( $id );
 
 	switch ($_DVWA['SQLI_DB']) {
@@ -48,6 +52,8 @@ if( isset( $_GET[ 'Submit' ] ) ) {
 		// Feedback for end user
 		$html .= '<pre>User ID is MISSING from the database.</pre>';
 	}
+
+	} // end is_numeric check
 
 }
 
