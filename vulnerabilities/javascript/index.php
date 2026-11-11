@@ -40,8 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 		if ($phrase == "success") {
 			switch( dvwaSecurityLevelGet() ) {
 				case 'low':
-					if ($token == md5(str_rot13("success"))) {
+					if (isset($_SESSION['js_challenge_token']) && hash_equals($_SESSION['js_challenge_token'], $token)) {
 						$message = "<p style='color:red'>Well done!</p>";
+						unset($_SESSION['js_challenge_token']);
 					} else {
 						$message = "<p>Invalid token.</p>";
 					}

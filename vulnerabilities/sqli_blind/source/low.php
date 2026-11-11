@@ -5,40 +5,30 @@ if( isset( $_GET[ 'Submit' ] ) ) {
 	$id = $_GET[ 'id' ];
 	$exists = false;
 
-	switch ($_DVWA['SQLI_DB']) {
-		case MYSQL:
-			// Check database
-			$query  = "SELECT first_name, last_name FROM users WHERE user_id = '$id';";
-			try {
-				$result = mysqli_query($GLOBALS["___mysqli_ston"],  $query ); // Removed 'or die' to suppress mysql errors
-			} catch (Exception $e) {
-				print "There was an error.";
-				exit;
-			}
+	if( !is_numeric( $id ) ) {
+		$exists = false;
+	} else {
+		$id = intval( $id );
+		switch ($_DVWA['SQLI_DB']) {
+			case MYSQL:
+				$stmt = mysqli_prepare($GLOBALS["___mysqli_ston"], 'SELECT first_name, last_name FROM users WHERE user_id = ? LIMIT 1;');
+				mysqli_stmt_bind_param($stmt, 'i', $id);
+				mysqli_stmt_execute($stmt);
+				mysqli_stmt_store_result($stmt);
+				$exists = (mysqli_stmt_num_rows($stmt) > 0);
+				mysqli_stmt_close($stmt);
+				((is_null($___mysqli_res = mysqli_close($GLOBALS["___mysqli_ston"]))) ? false : $___mysqli_res);
+				break;
+			case SQLITE:
+				global $sqlite_db_connection;
 
-			$exists = false;
-			if ($result !== false) {
-				try {
-					$exists = (mysqli_num_rows( $result ) > 0);
-				} catch(Exception $e) {
-					$exists = false;
-				}
-			}
-			((is_null($___mysqli_res = mysqli_close($GLOBALS["___mysqli_ston"]))) ? false : $___mysqli_res);
-			break;
-		case SQLITE:
-			global $sqlite_db_connection;
-
-			$query  = "SELECT first_name, last_name FROM users WHERE user_id = '$id';";
-			try {
-				$results = $sqlite_db_connection->query($query);
-				$row = $results->fetchArray();
+				$stmt = $sqlite_db_connection->prepare('SELECT first_name, last_name FROM users WHERE user_id = :id LIMIT 1;');
+				$stmt->bindValue(':id', $id, SQLITE3_INTEGER);
+				$results = $stmt->execute();
+				$row = $results ? $results->fetchArray() : false;
 				$exists = $row !== false;
-			} catch(Exception $e) {
-				$exists = false;
-			}
-
-			break;
+				break;
+		}
 	}
 
 	if ($exists) {
