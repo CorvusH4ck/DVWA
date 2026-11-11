@@ -56,8 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 					}
 					break;
 				case 'high':
-					if ($token == hash("sha256", hash("sha256", "XX" . strrev("success")) . "ZZ")) {
+					if (isset($_SESSION['js_challenge_token_high']) && hash_equals($_SESSION['js_challenge_token_high'], $token)) {
 						$message = "<p style='color:red'>Well done!</p>";
+						unset($_SESSION['js_challenge_token_high']);
 					} else {
 						$message = "<p>Invalid token.</p>";
 					}
