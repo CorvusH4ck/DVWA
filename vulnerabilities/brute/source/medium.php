@@ -37,8 +37,8 @@ if( isset( $_GET[ 'Login' ] ) ) {
 	$query  = "SELECT * FROM `users` WHERE user = '$user' AND password = '$pass';";
 	$result = mysqli_query($GLOBALS["___mysqli_ston"],  $query ) or die( '<pre>' . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . '</pre>' );
 
-	if( $result && mysqli_num_rows( $result ) == 1 && !$account_locked ) {
-		// Get users details
+	if( $result && mysqli_num_rows( $result ) == 1 ) {
+		// Correct credentials - allow login even if account is locked
 		$row    = mysqli_fetch_assoc( $result );
 		$avatar = $row["avatar"];
 
@@ -52,9 +52,11 @@ if( isset( $_GET[ 'Login' ] ) ) {
 		mysqli_stmt_execute($stmt);
 		mysqli_stmt_close($stmt);
 	}
+	else if( $account_locked ) {
+		$html .= "<pre><br />This account has been locked due to too many failed logins.</pre>";
+	}
 	else {
 		// Login failed
-		sleep( 2 );
 		$html .= "<pre><br />Username and/or password incorrect.</pre>";
 
 		// Increment failed login count

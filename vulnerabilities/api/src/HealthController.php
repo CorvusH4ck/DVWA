@@ -95,7 +95,7 @@ class HealthController
 				}
 			}
 
-			exec ("ping -c 4 " . escapeshellarg($target), $output, $ret_var);
+			exec ("ping -c 1 " . escapeshellarg($target), $output, $ret_var);
 
 			if ($ret_var == 0) {
 				$response['status_code_header'] = 'HTTP/1.1 200 OK';

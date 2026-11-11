@@ -18,11 +18,28 @@ if( isset( $_POST[ 'Upload' ] ) ) {
 		( $uploaded_type == "image/jpeg" || $uploaded_type == "image/png" ) &&
 		getimagesize( $uploaded_tmp ) ) {
 
-		if( !move_uploaded_file( $uploaded_tmp, $target_path ) ) {
-			$html .= '<pre>Your image was not uploaded.</pre>';
+		// Re-encode with GD to strip any embedded code (polyglot files)
+		$upload_ok = false;
+		if( $uploaded_ext == "png" ) {
+			$img = @imagecreatefrompng( $uploaded_tmp );
+			if( $img !== false ) {
+				imagepng( $img, $target_path, 9 );
+				imagedestroy( $img );
+				$upload_ok = true;
+			}
+		} else {
+			$img = @imagecreatefromjpeg( $uploaded_tmp );
+			if( $img !== false ) {
+				imagejpeg( $img, $target_path, 100 );
+				imagedestroy( $img );
+				$upload_ok = true;
+			}
 		}
-		else {
+
+		if( $upload_ok ) {
 			$html .= "<pre>{$target_path} succesfully uploaded!</pre>";
+		} else {
+			$html .= '<pre>Your image was not uploaded. Invalid image data.</pre>';
 		}
 	}
 	else {

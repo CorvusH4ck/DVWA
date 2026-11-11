@@ -13,18 +13,19 @@ if( isset( $_COOKIE[ 'id' ] ) ) {
 
 		switch ($_DVWA['SQLI_DB']) {
 			case MYSQL:
-				$stmt = mysqli_prepare($GLOBALS["___mysqli_ston"], 'SELECT first_name, last_name FROM users WHERE user_id = ? LIMIT 1;');
+				$stmt = mysqli_prepare($GLOBALS["___mysqli_ston"], 'SELECT first_name FROM users WHERE user_id = ? LIMIT 1;');
 				mysqli_stmt_bind_param($stmt, 'i', $id);
 				mysqli_stmt_execute($stmt);
-				$result = mysqli_stmt_get_result($stmt);
-				$exists = ($result && mysqli_num_rows($result) > 0);
+				$first_name = null;
+				mysqli_stmt_bind_result($stmt, $first_name);
+				$exists = mysqli_stmt_fetch($stmt) ? true : false;
 				mysqli_stmt_close($stmt);
 				((is_null($___mysqli_res = mysqli_close($GLOBALS["___mysqli_ston"]))) ? false : $___mysqli_res);
 				break;
 			case SQLITE:
 				global $sqlite_db_connection;
 
-				$query  = "SELECT first_name, last_name FROM users WHERE user_id = $id LIMIT 1;";
+				$query  = "SELECT first_name FROM users WHERE user_id = $id LIMIT 1;";
 				try {
 					$results = $sqlite_db_connection->query($query);
 					$row = $results->fetchArray();
