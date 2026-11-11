@@ -1,8 +1,8 @@
 <?php
 
-if( isset( $_GET[ 'Login' ] ) ) {
-	$user = $_GET[ 'username' ];
-	$pass = $_GET[ 'password' ];
+if( isset( $_REQUEST[ 'Login' ] ) ) {
+	$user = $_REQUEST[ 'username' ];
+	$pass = $_REQUEST[ 'password' ];
 	$pass = md5( $pass );
 
 	$total_failed_login = 3;

@@ -1,10 +1,10 @@
 <?php
 
-if( isset( $_GET[ 'Login' ] ) ) {
-	$user = $_GET[ 'username' ];
+if( isset( $_REQUEST[ 'Login' ] ) ) {
+	$user = $_REQUEST[ 'username' ];
 	$user = stripslashes( $user );
 
-	$pass = $_GET[ 'password' ];
+	$pass = $_REQUEST[ 'password' ];
 	$pass = stripslashes( $pass );
 	$pass = md5( $pass );
 
