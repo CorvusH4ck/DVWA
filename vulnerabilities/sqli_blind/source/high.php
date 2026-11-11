@@ -1,7 +1,7 @@
 <?php
 
 if( isset( $_COOKIE[ 'id' ] ) ) {
-	$id     = $_COOKIE[ 'id' ];
+	$id = $_COOKIE[ 'id' ];
 	$exists = false;
 
 	// Reject non-numeric input to prevent SQL injection via cookie
@@ -13,21 +13,12 @@ if( isset( $_COOKIE[ 'id' ] ) ) {
 
 		switch ($_DVWA['SQLI_DB']) {
 			case MYSQL:
-				$query  = "SELECT first_name, last_name FROM users WHERE user_id = $id LIMIT 1;";
-				try {
-					$result = mysqli_query($GLOBALS["___mysqli_ston"],  $query );
-				} catch (Exception $e) {
-					$result = false;
-				}
-
-				if ($result !== false) {
-					try {
-						$exists = (mysqli_num_rows( $result ) > 0);
-					} catch(Exception $e) {
-						$exists = false;
-					}
-				}
-
+				$stmt = mysqli_prepare($GLOBALS["___mysqli_ston"], 'SELECT first_name, last_name FROM users WHERE user_id = ? LIMIT 1;');
+				mysqli_stmt_bind_param($stmt, 'i', $id);
+				mysqli_stmt_execute($stmt);
+				$result = mysqli_stmt_get_result($stmt);
+				$exists = ($result && mysqli_num_rows($result) > 0);
+				mysqli_stmt_close($stmt);
 				((is_null($___mysqli_res = mysqli_close($GLOBALS["___mysqli_ston"]))) ? false : $___mysqli_res);
 				break;
 			case SQLITE:
@@ -41,7 +32,6 @@ if( isset( $_COOKIE[ 'id' ] ) ) {
 				} catch(Exception $e) {
 					$exists = false;
 				}
-
 				break;
 		}
 
@@ -52,7 +42,7 @@ if( isset( $_COOKIE[ 'id' ] ) ) {
 			header( $_SERVER[ 'SERVER_PROTOCOL' ] . ' 404 Not Found' );
 			$html .= '<pre>User ID is MISSING from the database.</pre>';
 		}
-	} // end is_numeric check
+	}
 }
 
 ?>

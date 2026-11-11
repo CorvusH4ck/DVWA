@@ -5,15 +5,17 @@ if( isset( $_POST[ 'Upload' ] ) ) {
 	$uploaded_name = $_FILES[ 'uploaded' ][ 'name' ];
 	$uploaded_ext  = strtolower( substr( $uploaded_name, strrpos( $uploaded_name, '.' ) + 1 ) );
 	$uploaded_size = $_FILES[ 'uploaded' ][ 'size' ];
+	$uploaded_type = $_FILES[ 'uploaded' ][ 'type' ];
 	$uploaded_tmp  = $_FILES[ 'uploaded' ][ 'tmp_name' ];
 
 	// Randomize filename to prevent path traversal and double-extension attacks
 	$safe_name    = md5( uniqid() ) . '.' . $uploaded_ext;
 	$target_path  = DVWA_WEB_PAGE_TO_ROOT . "hackable/uploads/" . $safe_name;
 
-	// Is it an image?
+	// Is it an image? (check extension, MIME type, size, and actual image content)
 	if( ( $uploaded_ext == "jpg" || $uploaded_ext == "jpeg" || $uploaded_ext == "png" ) &&
 		( $uploaded_size < 100000 ) &&
+		( $uploaded_type == "image/jpeg" || $uploaded_type == "image/png" ) &&
 		getimagesize( $uploaded_tmp ) ) {
 
 		if( !move_uploaded_file( $uploaded_tmp, $target_path ) ) {

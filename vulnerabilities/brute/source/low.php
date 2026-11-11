@@ -49,7 +49,6 @@ if( isset( $_GET[ 'Login' ] ) ) {
 		mysqli_stmt_close($stmt);
 	}
 	else {
-		sleep( 2 );
 		$html .= "<pre><br />Username and/or password incorrect.</pre>";
 
 		// Increment failed login count

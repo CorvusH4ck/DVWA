@@ -1,22 +1,29 @@
 <?php
 
-if (array_key_exists ("redirect", $_GET) && $_GET['redirect'] != "") {
-	$target = $_GET['redirect'];
-	if (preg_match( '/^info\.php\?id=\d+$/', $target )) {
+$target = "";
+
+if (array_key_exists ("redirect", $_GET) && is_numeric($_GET['redirect'])) {
+	switch (intval ($_GET['redirect'])) {
+		case 1:
+			$target = "info.php?id=1";
+			break;
+		case 2:
+			$target = "info.php?id=2";
+			break;
+		case 99:
+			$target = "https://digi.ninja";
+			break;
+	}
+	if ($target != "") {
 		header ("location: " . $target);
 		exit;
 	} else {
-		http_response_code (500);
 		?>
-		<p>Missing or invalid redirect target.</p>
+		Unknown redirect target.
 		<?php
 		exit;
 	}
 }
 
-http_response_code (500);
 ?>
-<p>Missing redirect target.</p>
-<?php
-exit;
-?>
+Missing redirect target.
