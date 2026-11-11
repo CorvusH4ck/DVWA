@@ -221,7 +221,9 @@ class UserController
 		if (array_key_exists ("name", $input)) {
 			$this->data[$id]->name = $input['name'];
 		}
-		if (array_key_exists ("level", $input)) {
+		// Only allow level changes on the vulnerable (medium) level
+		$securityLevel = isset($_COOKIE['security']) ? $_COOKIE['security'] : 'impossible';
+		if (array_key_exists ("level", $input) && $securityLevel === 'high') {
 			$this->data[$id]->level = intval ($input['level']);
 		}
 		$response['status_code_header'] = 'HTTP/1.1 200 OK';

@@ -48,8 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 					}
 					break;
 				case 'medium':
-					if ($token == strrev("XXsuccessXX")) {
+					if (isset($_SESSION['js_challenge_token_medium']) && hash_equals($_SESSION['js_challenge_token_medium'], $token)) {
 						$message = "<p style='color:red'>Well done!</p>";
+						unset($_SESSION['js_challenge_token_medium']);
 					} else {
 						$message = "<p>Invalid token.</p>";
 					}

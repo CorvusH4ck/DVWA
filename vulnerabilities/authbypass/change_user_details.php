@@ -8,7 +8,7 @@ dvwaDatabaseConnect();
 On low and impossible only the admin is allowed to modify the data.
 */
 
-if ((dvwaSecurityLevelGet() == "low" || dvwaSecurityLevelGet() == "impossible") && dvwaCurrentUser() != "admin") {
+if ((dvwaSecurityLevelGet() == "low" || dvwaSecurityLevelGet() == "medium" || dvwaSecurityLevelGet() == "impossible") && dvwaCurrentUser() != "admin") {
 	print json_encode (array ("result" => "fail", "error" => "Access denied"));
 	exit;
 }

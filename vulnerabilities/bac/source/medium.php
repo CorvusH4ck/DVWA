@@ -3,76 +3,48 @@ if (!defined('DVWA_WEB_PAGE_TO_ROOT')) {
     define('DVWA_WEB_PAGE_TO_ROOT', '../../../');
 }
 
-// Get current user's ID
-$query = "SELECT user_id FROM users WHERE user = '" . dvwaCurrentUser() . "';";
-$result = mysqli_query($GLOBALS["___mysqli_ston"], $query);
-$current_user_id = ($result && mysqli_num_rows($result) > 0) ? mysqli_fetch_assoc($result)['user_id'] : 0;
+// Get current user's ID from session (not from user-controlled input)
+$stmt = mysqli_prepare($GLOBALS["___mysqli_ston"], "SELECT user_id FROM users WHERE user = ?");
+mysqli_stmt_bind_param($stmt, 's', $_SESSION['dvwaUserLoggedIn']);
+mysqli_stmt_execute($stmt);
+$current_user_id_val = null;
+mysqli_stmt_bind_result($stmt, $current_user_id_val);
+mysqli_stmt_fetch($stmt);
+mysqli_stmt_close($stmt);
+$current_user_id = $current_user_id_val ? $current_user_id_val : 0;
 
-// Basic attempt at access control (but easily bypassed)
 $html = "";
 if (isset($_GET['action']) && isset($_GET['user_id'])) {
     if (!preg_match('/^\d+$/', $_GET['user_id'])) {
         $html .= "<p>Invalid user ID format. Please enter a number.</p>";
     } else {
-        $id = $_GET['user_id'];
-        $user_exists = false;
-        
-        // Check if user exists first
-        $check_query = "SELECT user_id FROM users WHERE user_id = '$id'";
-        $check_result = mysqli_query($GLOBALS["___mysqli_ston"], $check_query);
-        $user_exists = ($check_result && mysqli_num_rows($check_result) > 0);
-        
-        // "Secure" check that's easily bypassed
-        if (isset($_GET['token']) && $_GET['token'] == 'user_token') {
-            if ($user_exists) {
-                $query = "SELECT first_name, last_name, user_id, avatar FROM users WHERE user_id = '$id';";
-                $result = mysqli_query($GLOBALS["___mysqli_ston"], $query);
-                
-                if ($result && mysqli_num_rows($result) > 0) {
-                    $row = mysqli_fetch_assoc($result);
-                    $html .= "
-                        <div class=\"profile-info\">
-                            <h3>User Profile</h3>
-                            <p>User ID: {$row['user_id']}</p>
-                            <p>Name: {$row['first_name']} {$row['last_name']}</p>
-                            <p>Avatar: {$row['avatar']}</p>
-                            <!-- Hint: This token check isn't very secure... -->
-                        </div>";
-                }
-            } else {
-                $html .= "<p>No user found with ID: {$id}</p>";
-            }
+        $id = intval($_GET['user_id']);
+
+        // Only allow users to access their own profile
+        if ($id != $current_user_id) {
+            $html .= "<p>Access denied. You can only view your own profile.</p>";
         } else {
-            $html .= "<p>Access denied. Valid token required. <!-- Try using token=user_token --></p>";
-        }
-        
-        // Log access attempts
-        try {
-            // First check if the bac_log table exists
-            $check_table = "SHOW TABLES LIKE 'bac_log'";
-            $table_exists = mysqli_query($GLOBALS["___mysqli_ston"], $check_table);
-            
-            if ($table_exists && mysqli_num_rows($table_exists) == 0) {
-                // Create the table if it doesn't exist
-                $create_table = "CREATE TABLE IF NOT EXISTS bac_log (
-                    id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                    user_id INT(6) NULL,
-                    target_id INT(6) NULL,
-                    ip_address VARCHAR(50) NULL,
-                    action VARCHAR(50) NULL,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )";
-                mysqli_query($GLOBALS["___mysqli_ston"], $create_table);
+            $stmt2 = mysqli_prepare($GLOBALS["___mysqli_ston"], "SELECT first_name, last_name, user_id, avatar, role FROM users WHERE user_id = ? LIMIT 1");
+            mysqli_stmt_bind_param($stmt2, 'i', $id);
+            mysqli_stmt_execute($stmt2);
+            $row = null;
+            mysqli_stmt_bind_result($stmt2, $fn, $ln, $uid, $av, $role);
+            if (mysqli_stmt_fetch($stmt2)) {
+                $row = array('first_name' => $fn, 'last_name' => $ln, 'user_id' => $uid, 'avatar' => $av, 'role' => $role);
             }
-            
-            // Log the access attempt - only log numeric target_id
-            $ip = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
-            $target_id = $user_exists ? $id : 0; // Use 0 for non-existent users
-            $log_query = "INSERT INTO bac_log (user_id, target_id, ip_address) VALUES 
-                        ({$current_user_id}, {$target_id}, '{$ip}')";
-            mysqli_query($GLOBALS["___mysqli_ston"], $log_query);
-        } catch (Exception $e) {
-            // Silently fail if logging doesn't work
+            mysqli_stmt_close($stmt2);
+
+            if ($row) {
+                $html .= "
+                    <div class=\"profile-info\">
+                        <h3>User Profile</h3>
+                        <p>User ID: " . htmlspecialchars($row['user_id']) . "</p>
+                        <p>Name: " . htmlspecialchars($row['first_name']) . " " . htmlspecialchars($row['last_name']) . "</p>
+                        <p>Role: " . htmlspecialchars($row['role']) . "</p>
+                    </div>";
+            } else {
+                $html .= "<p>No user found.</p>";
+            }
         }
     }
 }
