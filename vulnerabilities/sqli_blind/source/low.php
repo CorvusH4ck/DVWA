@@ -1,8 +1,8 @@
 <?php
 
-if( isset( $_GET[ 'Submit' ] ) ) {
+if( isset( $_REQUEST[ 'Submit' ] ) ) {
 	// Get input
-	$id = $_GET[ 'id' ];
+	$id = $_REQUEST[ 'id' ];
 	$exists = false;
 
 	// Reject non-numeric input, then cast to int
@@ -17,9 +17,8 @@ if( isset( $_GET[ 'Submit' ] ) ) {
 				$stmt = mysqli_prepare($GLOBALS["___mysqli_ston"], 'SELECT first_name FROM users WHERE user_id = ? LIMIT 1;');
 				mysqli_stmt_bind_param($stmt, 'i', $id);
 				mysqli_stmt_execute($stmt);
-				$first_name = null;
-				mysqli_stmt_bind_result($stmt, $first_name);
-				$exists = mysqli_stmt_fetch($stmt) ? true : false;
+				$result = mysqli_stmt_get_result($stmt);
+				$exists = ($result && mysqli_num_rows($result) > 0);
 				mysqli_stmt_close($stmt);
 				((is_null($___mysqli_res = mysqli_close($GLOBALS["___mysqli_ston"]))) ? false : $___mysqli_res);
 				break;

@@ -1,20 +1,14 @@
 <?php
 
 if( isset( $_GET[ 'Change' ] ) ) {
-	// Validate the Anti-CSRF token (without redirect on failure)
+	// Validate the Anti-CSRF token
 	$token_valid = (
 		isset( $_REQUEST[ 'user_token' ] ) &&
 		isset( $_SESSION[ 'session_token' ] ) &&
 		hash_equals( $_SESSION[ 'session_token' ], $_REQUEST[ 'user_token' ] )
 	);
 
-	// Also accept requests from the same server (Referer check as fallback)
-	$referer_valid = (
-		isset( $_SERVER[ 'HTTP_REFERER' ] ) &&
-		stripos( $_SERVER[ 'HTTP_REFERER' ], $_SERVER[ 'SERVER_NAME' ] ) !== false
-	);
-
-	if( $token_valid || $referer_valid ) {
+	if( $token_valid ) {
 		$pass_new  = $_GET[ 'password_new' ];
 		$pass_conf = $_GET[ 'password_conf' ];
 

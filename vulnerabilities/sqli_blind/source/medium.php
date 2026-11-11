@@ -1,8 +1,8 @@
 <?php
 
-if( isset( $_POST[ 'Submit' ]  ) ) {
+if( isset( $_REQUEST[ 'Submit' ] ) ) {
 	// Get input
-	$id = $_POST[ 'id' ];
+	$id = $_REQUEST[ 'id' ];
 	$exists = false;
 
 	if( !is_numeric( $id ) ) {
@@ -16,9 +16,8 @@ if( isset( $_POST[ 'Submit' ]  ) ) {
 				$stmt = mysqli_prepare($GLOBALS["___mysqli_ston"], 'SELECT first_name FROM users WHERE user_id = ? LIMIT 1;');
 				mysqli_stmt_bind_param($stmt, 'i', $id);
 				mysqli_stmt_execute($stmt);
-				$first_name = null;
-				mysqli_stmt_bind_result($stmt, $first_name);
-				$exists = mysqli_stmt_fetch($stmt) ? true : false;
+				$result = mysqli_stmt_get_result($stmt);
+				$exists = ($result && mysqli_num_rows($result) > 0);
 				mysqli_stmt_close($stmt);
 				// Note: do NOT close the mysqli connection here;
 				// sqli_blind/index.php queries the DB for the dropdown after this file runs.
